@@ -38,3 +38,4 @@ terraform.rc
 
 # s3 script output
 bucket_info.txt
+terraform/.terraform.lock.hcl
