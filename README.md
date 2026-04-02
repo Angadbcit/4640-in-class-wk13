@@ -25,14 +25,20 @@ terraform {
 
 ### When is the state file created?
 
+That object is created when Terraform first performs an operation that writes state, such as a successful `terraform apply`.
+
 ### When is the lock file present?
 
+The lock file is present only when Terraform is actively holding a lock. In the S3 backend, locking is enabled with `use_lockfile = true`. Terraform automatically locks state for operations that could write state.
+
 ### Is the lock file always in the bucket after it is created?
+
+The lock file is not intended to remain in the bucket permanently. It exists while Terraform is performing a state-changing operation and holding the lock.
 
 ## Screenshots
 
 AWS S3 web console that shows the state file only:
-![state file only](./sc/state-file.png)
+![state file only](./state-file.png)
 
 AWS S3 web console that shows the lock file and the state file:
-![state and lock file](./sc/lock-file.png)
+![state and lock file](./lock-file.png)
