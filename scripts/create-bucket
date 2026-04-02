@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Enable exit on error
+set -e
+
+# Optional: Log actions if DEBUG flag is set
+DEBUG="${DEBUG:-false}"
+
+log() {
+    if [[ "$DEBUG" == "true" ]]; then
+        echo "[DEBUG] $1"
+    fi
+}
+
+# Check if the number of command-line arguments is correct
+if [[ "$#" -lt 1 ]]; then
+    echo "Usage: $0 <bucket_name> [region]"
+    exit 1
+fi
+
+# Pass the bucket name and optional region as positional parameters
+bucket_name="$1"
+region="${2:-us-west-2}"  # Default to us-west-2 if no region is provided
+
+log "Using bucket name: $bucket_name"
+log "Using region: $region"
+
+# Check if the bucket exists
+if aws s3api head-bucket --bucket "$bucket_name" --region "$region" 2>/dev/null; then
+    echo "Bucket $bucket_name already exists in region $region."
+    exit 1
+fi
+
+# Create the bucket
+echo "Creating bucket $bucket_name in region $region..."
+bucket_creation_response=$(aws s3api create-bucket \
+    --bucket "$bucket_name" \
+    --region "$region" \
+    --create-bucket-configuration LocationConstraint="$region" 2>&1)
+
+# Check if the bucket creation was successful
+if [[ $? -ne 0 ]]; then
+    echo "Failed to create the bucket $bucket_name: $bucket_creation_response"
+    exit 1
+fi
+
+# Save the bucket name and region to a file
+echo "create bucket info file"
+echo "you will need this file to delete your bucket with the included delete script"
+bucket_info_file="bucket_info.txt"
+echo "Bucket Name: $bucket_name" > "$bucket_info_file"
+echo "Region: $region" >> "$bucket_info_file"
+
+# Confirm creation
+echo "Bucket $bucket_name successfully created in region $region."

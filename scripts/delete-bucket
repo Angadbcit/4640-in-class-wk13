@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Enable exit on error
+set -e
+
+# Optional: Log actions if DEBUG flag is set
+DEBUG="${DEBUG:-false}"
+
+log() {
+    if [[ "$DEBUG" == "true" ]]; then
+        echo "[DEBUG] $1"
+    fi
+}
+
+# Check if the bucket info file exists
+bucket_info_file="bucket_info.txt"
+if [[ ! -f "$bucket_info_file" ]]; then
+    echo "Error: Bucket info file ($bucket_info_file) not found."
+    exit 1
+fi
+
+# Read the bucket name and region from the file
+bucket_name=$(grep -E '^Bucket Name:' "$bucket_info_file" | cut -d ' ' -f 3)
+region=$(grep -E '^Region:' "$bucket_info_file" | cut -d ' ' -f 2)
+
+if [[ -z "$bucket_name" || -z "$region" ]]; then
+    echo "Error: Bucket name or region is missing."
+    exit 1
+fi
+
+log "Deleting bucket: $bucket_name in region: $region"
+
+# Empty the bucket before deletion (necessary to delete non-empty buckets)
+echo "Emptying bucket $bucket_name..."
+aws s3 rm "s3://$bucket_name" --recursive --region "$region"
+
+# Delete the bucket
+echo "Deleting bucket $bucket_name..."
+aws s3api delete-bucket --bucket "$bucket_name" --region "$region"
+
+# Confirm deletion
+echo "Bucket $bucket_name successfully deleted."
